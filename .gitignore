@@ -1,0 +1,20 @@
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### IntelliJ IDEA ###
+.idea/*
+*.iws
+*.iml
+*.ipr
+
+### Mac OS ###
+.DS_Store
+
+### script env and data downloads ###
+*.env
+*.env_local
+*.env_dev
+voyager-datasync/scripts/data/*
+voyager-datasync/scripts/postgres/logs/*
