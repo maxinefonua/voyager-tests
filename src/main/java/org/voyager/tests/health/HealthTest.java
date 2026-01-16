@@ -6,19 +6,19 @@ import io.restassured.specification.RequestSpecification;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.voyager.commons.constants.Headers;
 import org.voyager.tests.config.FunctionalTestConfig;
-import org.voyager.utils.ConstantsUtils;
+import org.voyager.tests.config.HealthConfig;
 
 public class HealthTest {
     private static RequestSpecification requestSpec;
     @BeforeAll
     public static void setup() {
-        RestAssured.baseURI = FunctionalTestConfig.getBaseUrl();
-        RestAssured.basePath = FunctionalTestConfig.getHealthConfig().getHealthPath();
-        String authToken = FunctionalTestConfig.getAuthToken();
+        RestAssured.baseURI = FunctionalTestConfig.getBaseUri();
+        String authToken = FunctionalTestConfig.getUserAuthToken();
         requestSpec = new RequestSpecBuilder()
                 .addHeader("Accept", "application/json")
-                .addHeader(ConstantsUtils.AUTH_TOKEN_HEADER_NAME, authToken)
+                .addHeader(Headers.AUTH_TOKEN_HEADER_NAME, authToken)
                 .build();
     }
 
@@ -27,7 +27,7 @@ public class HealthTest {
         RestAssured.given()
                     .spec(requestSpec)
                     .when()
-                    .get()
+                    .get(HealthConfig.getHealthPath())
                     .then()
                     .assertThat()
                     .statusCode(200)

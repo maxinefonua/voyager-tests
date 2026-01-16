@@ -12,22 +12,23 @@ import java.util.regex.Pattern;
 public class FunctionalTestConfig {
     private static final Logger LOGGER = LoggerFactory.getLogger(FunctionalTestConfig.class);
     @Getter
-    private static final String baseUrl;
+    private static final String baseUri;
     @Getter
-    private static final String authToken;
+    private static final String userAuthToken;
     @Getter
-    private static final AirportsConfig airportsConfig;
+    private static final String adminAuthToken;
     @Getter
-    private static final HealthConfig healthConfig;
+    private static final String testAuthToken;
+    @Getter
+    private static Properties properties;
 
     static {
-        Properties properties = loadPropertiesFile("config.properties");
+        properties = loadPropertiesFile("config.properties");
         loadSystemEnvVariables(properties);
-
-        baseUrl = properties.getProperty("voyager.url");
-        authToken = properties.getProperty("voyager.auth.token");
-        airportsConfig = new AirportsConfig(properties);
-        healthConfig = new HealthConfig(properties);
+        baseUri = properties.getProperty("voyager.url");
+        userAuthToken = properties.getProperty("voyager.auth.token");
+        adminAuthToken = properties.getProperty("voyager.admin.token");
+        testAuthToken = properties.getProperty("voyager.test.token");
     }
 
     private static Properties loadPropertiesFile(String filename) {

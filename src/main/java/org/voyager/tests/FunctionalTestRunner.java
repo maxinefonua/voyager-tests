@@ -10,17 +10,20 @@ import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 import org.junit.platform.launcher.listeners.TestExecutionSummary;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.voyager.tests.health.HealthTest;
 
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectPackage;
 
 public class FunctionalTestRunner {
+    private static final Logger LOGGER = LoggerFactory.getLogger(FunctionalTestRunner.class);
     public static void main(String[] args) {
         loadRequiredSystemEnvVars(args);
         boolean criticalTestPassed = runHealthTest();
         if (!criticalTestPassed) {
-            System.out.println("❌ Health actuator test failed! Application may not be running. Exiting test execution.");
+            LOGGER.error("❌ Health actuator test failed! Application may not be running. Exiting test execution.");
             System.exit(1);
         }
         LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
@@ -35,21 +38,21 @@ public class FunctionalTestRunner {
         Launcher launcher = LauncherFactory.create();
         launcher.registerTestExecutionListeners(summaryListener, verboseListener);
 
-        System.out.println("🚀 STARTING TEST EXECUTION");
-        System.out.println("=" .repeat(60));
+        LOGGER.info("🚀 STARTING TEST EXECUTION");
+        LOGGER.info("=" .repeat(60));
 
         long startTime = System.currentTimeMillis();
         launcher.execute(request);
         long endTime = System.currentTimeMillis();
 
-        System.out.println("=" .repeat(60));
-        System.out.println("📋 TEST EXECUTION COMPLETED");
+        LOGGER.info("=" .repeat(60));
+        LOGGER.info("📋 TEST EXECUTION COMPLETED");
 
-        // Print detailed summary
         printVerboseSummary(summaryListener.getSummary(), endTime - startTime);
     }
 
-    private static boolean runHealthTest() {System.out.println("\n=== RUNNING CRITICAL TEST ===");
+    private static boolean runHealthTest() {
+        LOGGER.info("\n=== RUNNING CRITICAL TEST ===");
         LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
                 .selectors(selectClass(HealthTest.class))
                 .build();
@@ -68,7 +71,7 @@ public class FunctionalTestRunner {
             @Override
             public void executionStarted(TestIdentifier testIdentifier) {
                 if (testIdentifier.isTest()) {
-                    System.out.printf("▶️  RUNNING: %s%n", testIdentifier.getDisplayName());
+                    LOGGER.info("▶️  RUNNING: {}", testIdentifier.getDisplayName());
                 }
             }
 
@@ -76,24 +79,24 @@ public class FunctionalTestRunner {
             public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult result) {
                 if (testIdentifier.isTest()) {
                     String statusIcon = getStatusIcon(result.getStatus());
-                    System.out.printf("%s FINISHED: %s -> %s%n",
+                    LOGGER.info("{} FINISHED: {} -> {}",
                             statusIcon, testIdentifier.getDisplayName(), result.getStatus());
 
                     // Print failure details immediately
                     result.getThrowable().ifPresent(throwable -> {
-                        System.out.printf("   💥 FAILURE: %s%n", throwable.getMessage());
+                        LOGGER.error("   💥 FAILURE: {}", throwable.getMessage());
                         if (throwable.getCause() != null) {
-                            System.out.printf("   🔗 CAUSE: %s%n", throwable.getCause().getMessage());
+                            LOGGER.error("   🔗 CAUSE: {}", throwable.getCause().getMessage());
                         }
                     });
-                    System.out.println("-" .repeat(60));
+                    LOGGER.info("-" .repeat(60));
                 }
             }
 
             @Override
             public void executionSkipped(TestIdentifier testIdentifier, String reason) {
-                System.out.printf("⏭️  SKIPPED: %s%n", testIdentifier.getDisplayName());
-                System.out.printf("   📝 Reason: %s%n", reason);
+                LOGGER.info("⏭️  SKIPPED: {}", testIdentifier.getDisplayName());
+                LOGGER.info("   📝 Reason: {}", reason);
             }
 
             private String getStatusIcon(TestExecutionResult.Status status) {
@@ -107,60 +110,60 @@ public class FunctionalTestRunner {
     }
 
     private static void printVerboseSummary(TestExecutionSummary summary, long totalDuration) {
-        System.out.println("\n📊 DETAILED TEST SUMMARY");
-        System.out.println("═".repeat(50));
+        LOGGER.info("\n📊 DETAILED TEST SUMMARY");
+        LOGGER.info("═".repeat(50));
 
         // Basic counts
-        System.out.printf("Total tests found:    %d%n", summary.getTestsFoundCount());
-        System.out.printf("Tests started:        %d%n", summary.getTestsStartedCount());
-        System.out.printf("Tests succeeded:      %d%n", summary.getTestsSucceededCount());
-        System.out.printf("Tests failed:         %d%n", summary.getTestsFailedCount());
-        System.out.printf("Tests aborted:        %d%n", summary.getTestsAbortedCount());
-        System.out.printf("Tests skipped:        %d%n", summary.getTestsSkippedCount());
+        LOGGER.info("Total tests found:    {}", summary.getTestsFoundCount());
+        LOGGER.info("Tests started:        {}", summary.getTestsStartedCount());
+        LOGGER.info("Tests succeeded:      {}", summary.getTestsSucceededCount());
+        LOGGER.info("Tests failed:         {}", summary.getTestsFailedCount());
+        LOGGER.info("Tests aborted:        {}", summary.getTestsAbortedCount());
+        LOGGER.info("Tests skipped:        {}", summary.getTestsSkippedCount());
 
         // Success rate
         double successRate = summary.getTestsStartedCount() > 0 ?
                 (double) summary.getTestsSucceededCount() / summary.getTestsStartedCount() * 100 : 0;
-        System.out.printf("Success rate:         %.1f%%%n", successRate);
+        LOGGER.info("Success rate:         {}", successRate);
 
         // Timing
-        System.out.printf("Total duration:       %d ms%n", totalDuration);
+        LOGGER.info("Total duration:       {}", totalDuration);
 
         // Failure details
         if (summary.getTestsFailedCount() > 0) {
-            System.out.println("\n❌ FAILURE DETAILS");
-            System.out.println("-".repeat(30));
+            LOGGER.error("\n❌ FAILURE DETAILS");
+            LOGGER.error("-".repeat(30));
 
             summary.getFailures().forEach(failure -> {
                 TestIdentifier test = failure.getTestIdentifier();
                 Throwable exception = failure.getException();
 
-                System.out.printf("Test: %s%n", test.getDisplayName());
-                System.out.printf("Exception: %s%n", exception.getClass().getSimpleName());
-                System.out.printf("Message: %s%n", exception.getMessage());
+                LOGGER.error("Test: {}", test.getDisplayName());
+                LOGGER.error("Exception: {}", exception.getClass().getSimpleName());
+                LOGGER.error("Message: {}", exception.getMessage());
 
                 if (exception.getCause() != null) {
-                    System.out.printf("Root cause: %s%n", exception.getCause().getMessage());
+                    LOGGER.error("Root cause: {}", exception.getCause().getMessage());
                 }
 
                 // Print first few lines of stack trace
-                System.out.println("Stack trace (first 3 lines):");
+                LOGGER.info("Stack trace (first 3 lines):");
                 StackTraceElement[] stackTrace = exception.getStackTrace();
                 for (int i = 0; i < Math.min(3, stackTrace.length); i++) {
-                    System.out.printf("  at %s%n", stackTrace[i]);
+                    LOGGER.info("  at {}", stackTrace[i]);
                 }
-                System.out.println();
+                LOGGER.info("\n");
             });
         }
 
         // Summary verdict
-        System.out.println("═".repeat(50));
+        LOGGER.info("═".repeat(50));
         if (summary.getTestsFailedCount() == 0) {
-            System.out.println("🎉 ALL TESTS PASSED!");
+            LOGGER.info("🎉 ALL TESTS PASSED!");
         } else {
-            System.out.printf("💥 %d TEST(S) FAILED%n", summary.getTestsFailedCount());
+            LOGGER.info("💥 {} TEST(S) FAILED", summary.getTestsFailedCount());
         }
-        System.out.println("═".repeat(50));
+        LOGGER.info("═".repeat(50));
     }
 
     private static void loadRequiredSystemEnvVars(String[] args) {

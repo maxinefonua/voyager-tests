@@ -6,21 +6,22 @@ import io.restassured.specification.RequestSpecification;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.voyager.commons.constants.Headers;
+import org.voyager.commons.constants.ParameterNames;
+import org.voyager.commons.model.airline.Airline;
+import org.voyager.commons.model.airport.AirportType;
+import org.voyager.tests.config.AirportsConfig;
 import org.voyager.tests.config.FunctionalTestConfig;
-import org.voyager.model.Airline;
-import org.voyager.model.airport.AirportType;
-import org.voyager.utils.ConstantsUtils;
 
 public class NearbyAirportsTest {
     private static RequestSpecification requestSpec;
     @BeforeAll
     public static void setup() {
-        RestAssured.baseURI = FunctionalTestConfig.getBaseUrl();
-        RestAssured.basePath = FunctionalTestConfig.getAirportsConfig().getNearbyAirportsPath();
-        String authToken = FunctionalTestConfig.getAuthToken();
+        RestAssured.baseURI = FunctionalTestConfig.getBaseUri();
+        String authToken = FunctionalTestConfig.getUserAuthToken();
         requestSpec = new RequestSpecBuilder()
                 .addHeader("Accept", "application/json")
-                .addHeader(ConstantsUtils.AUTH_TOKEN_HEADER_NAME, authToken)
+                .addHeader(Headers.AUTH_TOKEN_HEADER_NAME, authToken)
                 .build();
     }
 
@@ -30,11 +31,11 @@ public class NearbyAirportsTest {
         Double longitudeOfSLC = -111.8912;
         RestAssured.given()
                 .spec(requestSpec)
-                .queryParams(ConstantsUtils.LATITUDE_PARAM_NAME,latitudeOfSLC,
-                        ConstantsUtils.LONGITUDE_PARAM_NAME,longitudeOfSLC,
-                        ConstantsUtils.LIMIT_PARAM_NAME,3)
+                .queryParams(ParameterNames.LATITUDE_PARAM_NAME,latitudeOfSLC,
+                        ParameterNames.LONGITUDE_PARAM_NAME,longitudeOfSLC,
+                        ParameterNames.LIMIT_PARAM_NAME,3)
                 .when()
-                .get()
+                .get(AirportsConfig.getNearbyAirportsPath())
                 .then()
                 .assertThat()
                 .statusCode(200)
@@ -50,13 +51,13 @@ public class NearbyAirportsTest {
         Double longitudeOfSLC = -111.8912;
         RestAssured.given()
                 .spec(requestSpec)
-                .queryParams(ConstantsUtils.LATITUDE_PARAM_NAME,latitudeOfSLC,
-                        ConstantsUtils.LONGITUDE_PARAM_NAME,longitudeOfSLC,
-                        ConstantsUtils.LIMIT_PARAM_NAME,3,
-                        ConstantsUtils.TYPE_PARAM_NAME, AirportType.CIVIL.name(),
-                        ConstantsUtils.AIRLINE_PARAM_NAME, Airline.UNITED)
+                .queryParams(ParameterNames.LATITUDE_PARAM_NAME,latitudeOfSLC,
+                        ParameterNames.LONGITUDE_PARAM_NAME,longitudeOfSLC,
+                        ParameterNames.LIMIT_PARAM_NAME,3,
+                        ParameterNames.TYPE_PARAM_NAME, AirportType.CIVIL.name(),
+                        ParameterNames.AIRLINE_PARAM_NAME, Airline.UNITED)
                 .when()
-                .get()
+                .get(AirportsConfig.getNearbyAirportsPath())
                 .then()
                 .assertThat()
                 .statusCode(200)

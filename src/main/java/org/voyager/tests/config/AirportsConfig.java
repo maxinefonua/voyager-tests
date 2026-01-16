@@ -1,34 +1,24 @@
 package org.voyager.tests.config;
 
 import lombok.Getter;
+
 import java.util.Properties;
 
 public class AirportsConfig {
+    @Getter
     private static String airportsPath;
+    @Getter
+    private static String adminAirportsPath;
+    @Getter
     private static String iataPath;
+    @Getter
     private static String nearbyAirportsPath;
-    private static String airportAirlinesPath;
 
-    AirportsConfig(Properties properties) {
+    static {
+        Properties properties = FunctionalTestConfig.getProperties();
+        adminAirportsPath = properties.getProperty("voyager.admin.airports");
         airportsPath = properties.getProperty("voyager.path.airports");
         nearbyAirportsPath = properties.getProperty("voyager.path.nearby-airports");
-        airportAirlinesPath = properties.getProperty("voyager.path.airport-airlines");
         iataPath = properties.getProperty("voyager.path.iata");
-    }
-
-    public String getAirportsPath() {
-        return airportsPath;
-    }
-
-    public String getIataPath() {
-        return iataPath;
-    }
-
-    public String getNearbyAirportsPath() {
-        return nearbyAirportsPath;
-    }
-
-    public String getAirportAirlinesPath() {
-        return airportAirlinesPath;
     }
 }

@@ -1,15 +1,12 @@
 package org.voyager.tests.config;
 
-import java.util.Properties;
+import lombok.Getter;
 
 public class HealthConfig {
+    @Getter
     private static String healthPath;
 
-    HealthConfig(Properties properties) {
-        healthPath = properties.getProperty("voyager.path.health");
-    }
-
-    public String getHealthPath(){
-        return healthPath;
+    static {
+        healthPath = FunctionalTestConfig.getProperties().getProperty("voyager.path.health");
     }
 }
