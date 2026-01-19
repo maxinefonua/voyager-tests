@@ -1,8 +1,11 @@
 package org.voyager.tests.airports.admin;
 
+import groovyjarjarasm.asm.TypeReference;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.common.mapper.TypeRef;
 import io.restassured.http.ContentType;
+import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
@@ -10,7 +13,11 @@ import org.junit.jupiter.api.BeforeAll;
 import org.voyager.commons.constants.Headers;
 import org.voyager.commons.constants.ParameterNames;
 import org.voyager.commons.constants.Path;
+import org.voyager.commons.model.airline.Airline;
+import org.voyager.commons.model.airline.AirlineBatchUpsert;
 import org.voyager.tests.config.FunctionalTestConfig;
+
+import java.util.List;
 
 class AdminAirlinesTest {
     private static RequestSpecification requestSpec;
@@ -96,11 +103,11 @@ class AdminAirlinesTest {
                 .assertThat()
                 .statusCode(400)
                 .body("message", Matchers.equalTo("Required request body missing"));
-
+        AirlineBatchUpsert airlineBatchUpsert = AirlineBatchUpsert.builder().build();
         RestAssured.given()
                 .spec(adminRequestSpec)
                 .contentType(ContentType.JSON)
-                .body("{}")
+                .body(airlineBatchUpsert)
                 .when()
                 .post(Path.Admin.AIRLINES)
                 .then()
@@ -111,10 +118,16 @@ class AdminAirlinesTest {
                 .body("message", Matchers.containsString("isActive"))
                 .body("message", Matchers.containsString("iataList"));
 
+        airlineBatchUpsert = AirlineBatchUpsert.builder()
+                .airline(Airline.DELTA.name())
+                .isActive(true)
+                .iataList(List.of())
+                .build();
+
         RestAssured.given()
                 .spec(adminRequestSpec)
                 .contentType(ContentType.JSON)
-                .body("{\"airline\":\"delta\",\"isActive\":true,\"iataList\":[]}")
+                .body(airlineBatchUpsert)
                 .when()
                 .post(Path.Admin.AIRLINES)
                 .then()
@@ -122,10 +135,12 @@ class AdminAirlinesTest {
                 .statusCode(400)
                 .body("message", Matchers.containsString("iataList"));
 
+        airlineBatchUpsert.setIataList(List.of("SJC","SFO"));
+
         RestAssured.given()
                 .spec(adminRequestSpec)
                 .contentType(ContentType.JSON)
-                .body("{\"airline\":\"delta\",\"isActive\":true,\"iataList\":[\"SJC\",\"SFO\"]}")
+                .body(airlineBatchUpsert)
                 .when()
                 .post(Path.Admin.AIRLINES)
                 .then()
@@ -151,7 +166,7 @@ class AdminAirlinesTest {
                 .spec(adminRequestSpec)
                 .contentType(ContentType.JSON)
                 .when()
-                .queryParam(ParameterNames.AIRLINE_PARAM_NAME,"")
+                .queryParam(ParameterNames.AIRLINE_PARAM_NAME, "")
                 .delete(Path.Admin.AIRLINES)
                 .then()
                 .assertThat()
@@ -162,23 +177,50 @@ class AdminAirlinesTest {
                 .spec(adminRequestSpec)
                 .contentType(ContentType.JSON)
                 .when()
-                .queryParam(ParameterNames.AIRLINE_PARAM_NAME,"fakeairline")
+                .queryParam(ParameterNames.AIRLINE_PARAM_NAME, "fakeairline")
                 .delete(Path.Admin.AIRLINES)
                 .then()
                 .assertThat()
                 .statusCode(400)
                 .body("message", Matchers.containsString("Invalid request parameter 'airline' with value 'fakeairline'"));
 
+        Airline airline = Airline.ZIPAIR;
+        Response response = RestAssured.given()
+                .spec(adminRequestSpec)
+                .contentType(ContentType.JSON)
+                .when()
+                .queryParam(ParameterNames.AIRLINE_PARAM_NAME, airline)
+                .get(Path.IATA);
+
+        List<String> airlineAirportList = response.body().as(new TypeRef<>() {});
         RestAssured.given()
                 .spec(adminRequestSpec)
                 .contentType(ContentType.JSON)
-                .body("{}")
                 .when()
-                .queryParam(ParameterNames.AIRLINE_PARAM_NAME,"zipair")
+                .queryParam(ParameterNames.AIRLINE_PARAM_NAME, airline)
                 .delete(Path.Admin.AIRLINES)
                 .then()
                 .assertThat()
                 .statusCode(200)
-                .body("", Matchers.notNullValue());
+                .body("", Matchers.equalTo(airlineAirportList.size()));
+
+        if (!airlineAirportList.isEmpty()) {
+            AirlineBatchUpsert airlineBatchUpsert = AirlineBatchUpsert.builder()
+                    .iataList(airlineAirportList)
+                    .isActive(true)
+                    .airline(airline.name())
+                    .build();
+
+            RestAssured.given()
+                    .spec(adminRequestSpec)
+                    .contentType(ContentType.JSON)
+                    .body(airlineBatchUpsert)
+                    .when()
+                    .post(Path.Admin.AIRLINES)
+                    .then()
+                    .assertThat()
+                    .statusCode(200)
+                    .body("", Matchers.equalTo(airlineAirportList.size()));
+        }
     }
 }

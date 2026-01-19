@@ -48,10 +48,52 @@ public class NearbyAirportsTest {
                 .body("[0].iata", Matchers.equalTo("SLC"))
                 .body("[1].iata", Matchers.equalTo("BTF"))
                 .body("[2].iata", Matchers.equalTo("HIF"));
+
+        RestAssured.given()
+                .spec(requestSpec)
+                .queryParam(ParameterNames.IATA_PARAM_NAME,"SLC")
+                .queryParam(ParameterNames.TYPE_PARAM_NAME,"military")
+                .when()
+                .get(Path.NEARBY_AIRPORTS)
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .body("size()", Matchers.equalTo(5))
+                .body("[0].iata", Matchers.equalTo("HIF"))
+                .body("[1].iata", Matchers.equalTo("MUO"))
+                .body("[2].iata", Matchers.equalTo("XSD"));
+
+        RestAssured.given()
+                .spec(requestSpec)
+                .queryParam(ParameterNames.IATA_PARAM_NAME,"SLC")
+                .queryParam(ParameterNames.AIRLINE_PARAM_NAME,"delta")
+                .when()
+                .get(Path.NEARBY_AIRPORTS)
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .body("size()", Matchers.equalTo(5))
+                .body("[0].iata", Matchers.equalTo("SLC"))
+                .body("[1].iata", Matchers.equalTo("PIH"))
+                .body("[2].iata", Matchers.equalTo("TWF"));
+
+        RestAssured.given()
+                .spec(requestSpec)
+                .queryParam(ParameterNames.IATA_PARAM_NAME,"SLC")
+                .queryParam(ParameterNames.AIRLINE_PARAM_NAME,"delta,united")
+                .when()
+                .get(Path.NEARBY_AIRPORTS)
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .body("size()", Matchers.equalTo(5))
+                .body("[0].iata", Matchers.equalTo("SLC"))
+                .body("[1].iata", Matchers.equalTo("PIH"))
+                .body("[2].iata", Matchers.equalTo("RKS"));
     }
 
     @Test
-    public void testGetNearbyAirportsCoordinates() {
+    public void nearbyAirportsCoordinates() {
         Double latitudeOfSLC = 40.7695;
         RestAssured.given()
                 .spec(requestSpec)
