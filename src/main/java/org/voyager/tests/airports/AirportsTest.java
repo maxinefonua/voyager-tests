@@ -31,8 +31,54 @@ public class AirportsTest {
                 .then()
                 .assertThat()
                 .statusCode(200)
-                .body("size()", Matchers.greaterThan(0)) // Assert the response is a non-empty array
+                .body("size()", Matchers.greaterThan(0))
                 .body("", Matchers.hasItem("HNL"));
+    }
+
+    @Test
+    public void getIataCodesType() {
+        RestAssured.given()
+                .spec(requestSpec)
+                .when()
+                .get(AirportsConfig.getIataPath().concat("?type=faketype"))
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", Matchers.containsString("Invalid request parameter 'type' with value 'faketype'"));
+
+        RestAssured.given()
+                .spec(requestSpec)
+                .when()
+                .get(AirportsConfig.getIataPath().concat("?type=UNVERIFIED"))
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .body("size()", Matchers.greaterThan(0))
+                .body("", Matchers.not(Matchers.hasItem("HNL")))
+                .body("", Matchers.hasItem("AMJ"));
+    }
+
+    @Test
+    public void getIataCodesAirline() {
+        RestAssured.given()
+                .spec(requestSpec)
+                .when()
+                .get(AirportsConfig.getIataPath().concat("?airline=fakeairline"))
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", Matchers.containsString("Invalid request parameter 'type' with value 'fakeairline'"));
+
+        RestAssured.given()
+                .spec(requestSpec)
+                .when()
+                .get(AirportsConfig.getIataPath().concat("?airline=JAPAN"))
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .body("size()", Matchers.greaterThan(0))
+                .body("", Matchers.not(Matchers.hasItem("SJC")))
+                .body("", Matchers.hasItem("ITM"));
     }
 
     @Test
