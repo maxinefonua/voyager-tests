@@ -127,7 +127,10 @@ public class FunctionalTestRunner {
         LOGGER.info("Success rate:         {}", successRate);
 
         // Timing
-        LOGGER.info("Total duration:       {}", totalDuration);
+        long minutes = totalDuration / 60000;
+        long seconds = (totalDuration % 60000) / 1000;
+        long millis = totalDuration % 1000;
+        LOGGER.info("Total duration: {}m {}s {}ms", minutes, seconds, millis);
 
         // Failure details
         if (summary.getTestsFailedCount() > 0) {

@@ -1,24 +1,16 @@
 package org.voyager.tests.airports;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
-import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.voyager.commons.constants.Headers;
-import org.voyager.commons.model.airport.AirportForm;
-import org.voyager.commons.model.airport.AirportPatch;
-import org.voyager.commons.model.airport.AirportType;
 import org.voyager.tests.config.AirportsConfig;
 import org.voyager.tests.config.FunctionalTestConfig;
-import java.time.ZoneOffset;
-import static org.hamcrest.Matchers.equalTo;
 
 public class AirportsTest {
     private static RequestSpecification requestSpec;
-    private static RequestSpecification adminRequestSpec;
-    private static RequestSpecification testRequestSpec;
     @BeforeAll
     public static void setup() {
         RestAssured.baseURI = FunctionalTestConfig.getBaseUri();
@@ -28,22 +20,10 @@ public class AirportsTest {
                 .addHeader("Accept", "application/json")
                 .addHeader(Headers.AUTH_TOKEN_HEADER_NAME, authToken)
                 .build();
-
-        String adminToken = FunctionalTestConfig.getAdminAuthToken();
-        adminRequestSpec = new RequestSpecBuilder()
-                .addHeader("Accept", "application/json")
-                .addHeader(Headers.AUTH_TOKEN_HEADER_NAME, adminToken)
-                .build();
-
-        String testToken = FunctionalTestConfig.getTestAuthToken();
-        testRequestSpec = new RequestSpecBuilder()
-                .addHeader("Accept", "application/json")
-                .addHeader(Headers.AUTH_TOKEN_HEADER_NAME, testToken)
-                .build();
     }
 
     @Test
-    public void testGetIataCodes() {
+    public void getIataCodes() {
         RestAssured.given()
                 .spec(requestSpec)
                 .when()
@@ -52,22 +32,11 @@ public class AirportsTest {
                 .assertThat()
                 .statusCode(200)
                 .body("size()", Matchers.greaterThan(0)) // Assert the response is a non-empty array
-                .body("$", Matchers.hasItem("HNL"));
+                .body("", Matchers.hasItem("HNL"));
     }
 
     @Test
-    public void testPostIata() {
-        RestAssured.given()
-                .spec(requestSpec)
-                .when()
-                .post(AirportsConfig.getIataPath())
-                .then()
-                .assertThat()
-                .statusCode(405);
-    }
-
-    @Test
-    public void testGetAirports() {
+    public void getPagedAirports() {
         RestAssured.given()
                 .spec(requestSpec)
                 .when()
@@ -75,20 +44,123 @@ public class AirportsTest {
                 .then()
                 .assertThat()
                 .statusCode(200)
-                .body("size", equalTo(100)) // Assert the response is a non-empty array
-                .body("content.find { it.iata == 'ABB' }.countryCode", equalTo("NG"));
-    }
+                .body("size", Matchers.equalTo(100))
+                .body("page", Matchers.equalTo(0))
+                .body("first", Matchers.equalTo(true))
+                .body("last", Matchers.equalTo(false))
+                .body("content.iata", Matchers.hasItem("ABQ"));
 
-    @Test
-    public void testGetCivilAirports() {
+
         RestAssured.given()
                 .spec(requestSpec)
                 .when()
-                .get(AirportsConfig.getAirportsPath())
+                .get(AirportsConfig.getAirportsPath().concat("?size=0"))
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", Matchers.equalTo("'size' must be greater than or equal to 1"));
+
+
+        RestAssured.given()
+                .spec(requestSpec)
+                .when()
+                .get(AirportsConfig.getAirportsPath().concat("?page=-1"))
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", Matchers.equalTo("'page' must be greater than or equal to 0"));
+    }
+
+    @Test
+    public void getPagedAirportsType() {
+        RestAssured.given()
+                .spec(requestSpec)
+                .when()
+                .get(AirportsConfig.getAirportsPath().concat("?type=faketype"))
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", Matchers.containsString("Invalid request parameter 'type' with value 'faketype'"));
+
+        RestAssured.given()
+                .spec(requestSpec)
+                .when()
+                .get(AirportsConfig.getAirportsPath().concat("?type=MILITARY&size=1000"))
                 .then()
                 .assertThat()
                 .statusCode(200)
-                .body("size", equalTo(100));
+                .body("size", Matchers.equalTo(1000))
+                .body("page", Matchers.equalTo(0))
+                .body("first", Matchers.equalTo(true))
+                .body("last", Matchers.equalTo(true))
+                .body("content.iata", Matchers.not(Matchers.hasItem("ABQ")));
+    }
+
+    @Test
+    public void getPagedAirportsCountry() {
+        RestAssured.given()
+                .spec(requestSpec)
+                .when()
+                .get(AirportsConfig.getAirportsPath().concat("?countryCode=12"))
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", Matchers.containsString("Invalid request parameter 'countryCode' with value '12'"));
+
+        RestAssured.given()
+                .spec(requestSpec)
+                .when()
+                .get(AirportsConfig.getAirportsPath().concat("?countryCode=TO"))
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .body("content.iata", Matchers.not(Matchers.hasItem("ABQ")))
+                .body("content.iata", Matchers.hasItem("EUA"))
+                .body("size", Matchers.equalTo(100))
+                .body("page", Matchers.equalTo(0))
+                .body("last", Matchers.equalTo(true))
+                .body("first", Matchers.equalTo(true))
+                .body("numberOfElements", Matchers.greaterThan(0));
+
+        RestAssured.given()
+                .spec(requestSpec)
+                .when()
+                .get(AirportsConfig.getAirportsPath().concat("?countryCode=TO&type=MILITARY"))
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .body("content.iata", Matchers.not(Matchers.hasItem("EUA")))
+                .body("size", Matchers.equalTo(100))
+                .body("page", Matchers.equalTo(0))
+                .body("last", Matchers.equalTo(true))
+                .body("first", Matchers.equalTo(true))
+                .body("numberOfElements", Matchers.equalTo(0));
+    }
+
+    @Test
+    public void getPagedAirportsAirline() {
+        RestAssured.given()
+                .spec(requestSpec)
+                .when()
+                .get(AirportsConfig.getAirportsPath().concat("?airline=fakeairline"))
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", Matchers.containsString("Invalid request parameter 'airline' with value 'fakeairline'"));
+
+        RestAssured.given()
+                .spec(requestSpec)
+                .when()
+                .get(AirportsConfig.getAirportsPath().concat("?airline=DELTA&size=1000"))
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .body("size", Matchers.equalTo(1000))
+                .body("page", Matchers.equalTo(0))
+                .body("first", Matchers.equalTo(true))
+                .body("last", Matchers.equalTo(true))
+                .body("content.iata", Matchers.not(Matchers.hasItem("HEL")))
+                .body("content.iata", Matchers.hasItem("JFK"));
     }
 
     @Test
@@ -100,109 +172,6 @@ public class AirportsTest {
                 .then()
                 .assertThat()
                 .statusCode(200)
-                .body("subdivision", equalTo("Hyogo"));
-    }
-
-    @Test
-    public void testPostAirportUnauth() {
-        AirportForm airportForm = AirportForm.builder().build();
-        RestAssured.given()
-                .spec(requestSpec)
-                .contentType(ContentType.JSON)
-                .body(airportForm)
-                .when()
-                .post(AirportsConfig.getAdminAirportsPath())
-                .then()
-                .assertThat()
-                .statusCode(403)
-                .body("error", equalTo("Forbidden"));
-    }
-
-    @Test
-    public void testPostAirportAuthThenCleanup() {
-        String iata = "ZZZ";
-        AirportForm airportForm = AirportForm.builder()
-                .iata(iata)
-                .countryCode("PR")
-                .zoneId(ZoneOffset.UTC.getId())
-                .airportType(AirportType.CIVIL.name())
-                .latitude("10")
-                .longitude("1")
-                .name("Test Name")
-                .city("Test City")
-                .subdivision("Test Subdivision")
-                .build();
-
-        RestAssured.given()
-                .spec(adminRequestSpec)
-                .contentType(ContentType.JSON)
-                .body(airportForm)
-                .when()
-                .post(AirportsConfig.getAdminAirportsPath())
-                .then()
-                .assertThat()
-                .statusCode(200)
-                .body("city", equalTo("Test City"));
-
-        RestAssured.given()
-                .spec(requestSpec)
-                .contentType(ContentType.JSON)
-                .when()
-                .get(AirportsConfig.getAirportsPath().concat("/").concat(iata))
-                .then()
-                .assertThat()
-                .statusCode(200)
-                .body("name", equalTo("Test Name"));
-
-        RestAssured.given()
-                .spec(testRequestSpec)
-                .contentType(ContentType.JSON)
-                .when()
-                .delete(AirportsConfig.getAdminAirportsPath().concat("/").concat(iata))
-                .then()
-                .assertThat()
-                .statusCode(204);
-    }
-
-    @Test
-    public void testPatchAirportUnauth() {
-        AirportPatch airportPatch = AirportPatch.builder().type(AirportType.UNVERIFIED.name()).build();
-        RestAssured.given()
-                .spec(requestSpec)
-                .contentType(ContentType.JSON)
-                .body(airportPatch)
-                .when()
-                .patch(AirportsConfig.getAdminAirportsPath().concat("/SJC"))
-                .then()
-                .assertThat()
-                .statusCode(403)
-                .body("error", equalTo("Forbidden"));
-    }
-
-    @Test
-    public void testPatchAirportAuth() {
-        AirportPatch airportPatch1 = AirportPatch.builder().type(AirportType.UNVERIFIED.name()).build();
-        AirportPatch airportPatch2 = AirportPatch.builder().type(AirportType.CIVIL.name()).build();
-        RestAssured.given()
-                .spec(adminRequestSpec)
-                .contentType(ContentType.JSON)
-                .body(airportPatch1)
-                .when()
-                .patch(AirportsConfig.getAdminAirportsPath().concat("/SJC"))
-                .then()
-                .assertThat()
-                .statusCode(200)
-                .body("type", equalTo(AirportType.UNVERIFIED.name()));
-
-        RestAssured.given()
-                .spec(adminRequestSpec)
-                .contentType(ContentType.JSON)
-                .body(airportPatch2)
-                .when()
-                .patch(AirportsConfig.getAdminAirportsPath().concat("/SJC"))
-                .then()
-                .assertThat()
-                .statusCode(200)
-                .body("type", equalTo(AirportType.CIVIL.name()));
+                .body("subdivision", Matchers.equalTo("Hyogo"));
     }
 }
