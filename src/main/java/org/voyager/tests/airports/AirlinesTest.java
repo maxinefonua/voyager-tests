@@ -8,7 +8,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.voyager.commons.constants.Headers;
 import org.voyager.commons.constants.ParameterNames;
-import org.voyager.tests.config.AirlinesConfig;
+import org.voyager.commons.constants.Path;
 import org.voyager.tests.config.FunctionalTestConfig;
 import java.util.List;
 
@@ -29,7 +29,7 @@ public class AirlinesTest {
         RestAssured.given()
                 .spec(requestSpec)
                 .when()
-                .get(AirlinesConfig.getAirlinesPath())
+                .get(Path.AIRLINES)
                 .then()
                 .assertThat()
                 .statusCode(200)
@@ -39,13 +39,12 @@ public class AirlinesTest {
 
     @Test
     public void getAirlinesIataParams() {
-        String params = "iata=HNL,HLN";
-        String ops = "operator=AND";
         RestAssured.given()
                 .spec(requestSpec)
                 .when()
-                .get(AirlinesConfig.getAirlinesPath()
-                        .concat(String.format("?%s&%s",params,ops)))
+                .queryParam("iata","HNL","HLN")
+                .queryParam("operator","AND")
+                .get(Path.AIRLINES)
                 .then()
                 .assertThat()
                 .statusCode(200)
@@ -55,7 +54,8 @@ public class AirlinesTest {
         RestAssured.given()
                 .spec(requestSpec)
                 .when()
-                .get(AirlinesConfig.getAirlinesPath().concat(String.format("?%s",params)))
+                .queryParam("iata","HNL","HLN")
+                .get(Path.AIRLINES)
                 .then()
                 .assertThat()
                 .statusCode(200)
@@ -69,18 +69,19 @@ public class AirlinesTest {
         RestAssured.given()
                 .spec(requestSpec)
                 .when()
-                .get(AirlinesConfig.getAirlinesPath()
-                        .concat(String.format("?%s",origin)))
+                .queryParam("origin","ITM")
+                .get(Path.AIRLINES)
                 .then()
                 .assertThat()
                 .statusCode(400)
                 .body("message",Matchers.containsString("destination"));
 
-        String destination = "destination=SMF";
         RestAssured.given()
                 .spec(requestSpec)
                 .when()
-                .get(AirlinesConfig.getAirlinesPath().concat(String.format("?%s&%s",origin,destination)))
+                .queryParam("origin","ITM")
+                .queryParam("destination","SMF")
+                .get(Path.AIRLINES)
                 .then()
                 .assertThat()
                 .statusCode(200)
@@ -90,7 +91,9 @@ public class AirlinesTest {
         RestAssured.given()
                 .spec(requestSpec)
                 .when()
-                .get(AirlinesConfig.getAirlinesPath().concat(String.format("?%s&%s",origin,destination2)))
+                .queryParam("origin","ITM")
+                .queryParam("destination","HNL")
+                .get(Path.AIRLINES)
                 .then()
                 .assertThat()
                 .statusCode(200)
@@ -100,14 +103,12 @@ public class AirlinesTest {
 
     @Test
     public void getAirlinesBothParams() {
-        String origin = "origin=ITM";
-        String destination = "destination=SMF";
-        String iata = "iata=HNL,HLN";
         RestAssured.given()
                 .spec(requestSpec)
                 .when()
-                .get(AirlinesConfig.getAirlinesPath()
-                        .concat(String.format("?%s&%s",origin,iata)))
+                .queryParam("origin","ITM")
+                .queryParam("iata","HNL","HLN")
+                .get(Path.AIRLINES)
                 .then()
                 .assertThat()
                 .statusCode(400)
@@ -116,8 +117,9 @@ public class AirlinesTest {
         RestAssured.given()
                 .spec(requestSpec)
                 .when()
-                .get(AirlinesConfig.getAirlinesPath()
-                        .concat(String.format("?%s&%s",iata,destination)))
+                .queryParam("iata","HNL","HLN")
+                .queryParam("destination","SMF")
+                .get(Path.AIRLINES)
                 .then()
                 .assertThat()
                 .statusCode(400)
@@ -126,8 +128,10 @@ public class AirlinesTest {
         RestAssured.given()
                 .spec(requestSpec)
                 .when()
-                .get(AirlinesConfig.getAirlinesPath()
-                        .concat(String.format("?%s&%s&%s",iata,origin,destination)))
+                .queryParam("origin","ITM")
+                .queryParam("iata","HNL","HLN")
+                .queryParam("destination","SMF")
+                .get(Path.AIRLINES)
                 .then()
                 .assertThat()
                 .statusCode(400)
@@ -140,7 +144,7 @@ public class AirlinesTest {
                 .spec(requestSpec)
                 .queryParam(ParameterNames.IATA_PARAM_NAME, List.of("HEL"))
                 .when()
-                .get(AirlinesConfig.getAirlinesPath())
+                .get(Path.AIRLINES)
                 .then()
                 .assertThat()
                 .statusCode(200)

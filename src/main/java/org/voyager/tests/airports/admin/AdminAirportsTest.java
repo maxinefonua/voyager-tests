@@ -3,15 +3,18 @@ package org.voyager.tests.airports.admin;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.http.ContentType;
+import io.restassured.response.Response;
+import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.voyager.commons.constants.Headers;
+import org.voyager.commons.constants.ParameterNames;
+import org.voyager.commons.constants.Path;
 import org.voyager.commons.model.airport.AirportForm;
 import org.voyager.commons.model.airport.AirportPatch;
 import org.voyager.commons.model.airport.AirportType;
-import org.voyager.tests.config.AirportsConfig;
 import org.voyager.tests.config.FunctionalTestConfig;
 import java.time.ZoneOffset;
 
@@ -48,7 +51,7 @@ public class AdminAirportsTest {
         RestAssured.given()
                 .spec(requestSpec)
                 .when()
-                .post(AirportsConfig.getIataPath())
+                .post(Path.AIRPORTS)
                 .then()
                 .assertThat()
                 .statusCode(405);
@@ -59,7 +62,7 @@ public class AdminAirportsTest {
                 .contentType(ContentType.JSON)
                 .body(airportForm)
                 .when()
-                .post(AirportsConfig.getAdminAirportsPath())
+                .post(Path.Admin.AIRPORTS)
                 .then()
                 .assertThat()
                 .statusCode(403)
@@ -69,44 +72,54 @@ public class AdminAirportsTest {
     @Test
     public void addAirportAndDeleteAirport() {
         String iata = "ZZZ";
-        AirportForm airportForm = AirportForm.builder()
-                .iata(iata)
-                .countryCode("PR")
-                .zoneId(ZoneOffset.UTC.getId())
-                .airportType(AirportType.CIVIL.name())
-                .latitude("10")
-                .longitude("1")
-                .name("Test Name")
-                .city("Test City")
-                .subdivision("Test Subdivision")
-                .build();
-
-        RestAssured.given()
+        Response getResponse = RestAssured.given()
                 .spec(adminRequestSpec)
                 .contentType(ContentType.JSON)
-                .body(airportForm)
                 .when()
-                .post(AirportsConfig.getAdminAirportsPath())
-                .then()
-                .assertThat()
-                .statusCode(200)
-                .body("city", Matchers.equalTo("Test City"));
+                .pathParams(ParameterNames.IATA_PARAM_NAME,iata)
+                .get(Path.AIRPORT_BY_IATA);
+        if (getResponse.statusCode() != 200) {
+            AirportForm airportForm = AirportForm.builder()
+                    .iata(iata)
+                    .countryCode("PR")
+                    .zoneId(ZoneOffset.UTC.getId())
+                    .airportType(AirportType.CIVIL.name())
+                    .latitude("10")
+                    .longitude("1")
+                    .name("Test Name")
+                    .city("Test City")
+                    .subdivision("Test Subdivision")
+                    .build();
 
-        RestAssured.given()
-                .spec(requestSpec)
-                .contentType(ContentType.JSON)
-                .when()
-                .get(AirportsConfig.getAirportsPath().concat("/").concat(iata))
-                .then()
-                .assertThat()
-                .statusCode(200)
-                .body("name", Matchers.equalTo("Test Name"));
+            RestAssured.given()
+                    .spec(adminRequestSpec)
+                    .contentType(ContentType.JSON)
+                    .body(airportForm)
+                    .when()
+                    .post(Path.Admin.AIRPORTS)
+                    .then()
+                    .assertThat()
+                    .statusCode(200)
+                    .body("city", Matchers.equalTo("Test City"));
+
+            RestAssured.given()
+                    .spec(requestSpec)
+                    .contentType(ContentType.JSON)
+                    .when()
+                    .pathParams(ParameterNames.IATA_PARAM_NAME,iata)
+                    .get(Path.AIRPORT_BY_IATA)
+                    .then()
+                    .assertThat()
+                    .statusCode(200)
+                    .body("name", Matchers.equalTo("Test Name"));
+        }
 
         RestAssured.given()
                 .spec(testRequestSpec)
                 .contentType(ContentType.JSON)
                 .when()
-                .delete(AirportsConfig.getAdminAirportsPath().concat("/").concat(iata))
+                .pathParams(ParameterNames.IATA_PARAM_NAME,iata)
+                .delete("/admin".concat(Path.AIRPORT_BY_IATA))
                 .then()
                 .assertThat()
                 .statusCode(204);
@@ -120,7 +133,8 @@ public class AdminAirportsTest {
                 .contentType(ContentType.JSON)
                 .body(airportPatch)
                 .when()
-                .patch(AirportsConfig.getAdminAirportsPath().concat("/SJC"))
+                .pathParams(ParameterNames.IATA_PARAM_NAME,"SJC")
+                .patch("/admin".concat(Path.AIRPORT_BY_IATA))
                 .then()
                 .assertThat()
                 .statusCode(403)
@@ -133,7 +147,8 @@ public class AdminAirportsTest {
                 .contentType(ContentType.JSON)
                 .body(airportPatch1)
                 .when()
-                .patch(AirportsConfig.getAdminAirportsPath().concat("/SJC"))
+                .pathParams(ParameterNames.IATA_PARAM_NAME,"SJC")
+                .patch("/admin".concat(Path.AIRPORT_BY_IATA))
                 .then()
                 .assertThat()
                 .statusCode(200)
@@ -144,7 +159,8 @@ public class AdminAirportsTest {
                 .contentType(ContentType.JSON)
                 .body(airportPatch2)
                 .when()
-                .patch(AirportsConfig.getAdminAirportsPath().concat("/SJC"))
+                .pathParams(ParameterNames.IATA_PARAM_NAME,"SJC")
+                .patch("/admin".concat(Path.AIRPORT_BY_IATA))
                 .then()
                 .assertThat()
                 .statusCode(200)

@@ -8,9 +8,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.voyager.commons.constants.Headers;
 import org.voyager.commons.constants.ParameterNames;
+import org.voyager.commons.constants.Path;
 import org.voyager.commons.model.airline.Airline;
 import org.voyager.commons.model.airport.AirportType;
-import org.voyager.tests.config.AirportsConfig;
 import org.voyager.tests.config.FunctionalTestConfig;
 
 public class NearbyAirportsTest {
@@ -26,28 +26,44 @@ public class NearbyAirportsTest {
     }
 
     @Test
-    public void testGetNearbyAirports() {
-        Double latitudeOfSLC = 40.7695;
-        Double longitudeOfSLC = -111.8912;
+    public void nearbyAirportsIata() {
         RestAssured.given()
                 .spec(requestSpec)
-                .queryParams(ParameterNames.LATITUDE_PARAM_NAME,latitudeOfSLC,
-                        ParameterNames.LONGITUDE_PARAM_NAME,longitudeOfSLC,
-                        ParameterNames.LIMIT_PARAM_NAME,3)
                 .when()
-                .get(AirportsConfig.getNearbyAirportsPath())
+                .get(Path.NEARBY_AIRPORTS)
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", Matchers.containsString("Missing required request parameter 'iata'"));
+
+        RestAssured.given()
+                .spec(requestSpec)
+                .queryParam(ParameterNames.IATA_PARAM_NAME,"SLC")
+                .when()
+                .get(Path.NEARBY_AIRPORTS)
                 .then()
                 .assertThat()
                 .statusCode(200)
-                .body("size()", Matchers.equalTo(3))
+                .body("size()", Matchers.equalTo(5))
                 .body("[0].iata", Matchers.equalTo("SLC"))
                 .body("[1].iata", Matchers.equalTo("BTF"))
                 .body("[2].iata", Matchers.equalTo("HIF"));
     }
 
     @Test
-    public void testGetNearbyAirportsWithFilters() {
+    public void testGetNearbyAirportsCoordinates() {
         Double latitudeOfSLC = 40.7695;
+        RestAssured.given()
+                .spec(requestSpec)
+                .when()
+                .queryParam(ParameterNames.LATITUDE_PARAM_NAME,latitudeOfSLC)
+                .get(Path.NEARBY_AIRPORTS)
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", Matchers.containsString("Invalid request parameter 'longitude'"));
+
+
         Double longitudeOfSLC = -111.8912;
         RestAssured.given()
                 .spec(requestSpec)
@@ -57,7 +73,7 @@ public class NearbyAirportsTest {
                         ParameterNames.TYPE_PARAM_NAME, AirportType.CIVIL.name(),
                         ParameterNames.AIRLINE_PARAM_NAME, Airline.UNITED)
                 .when()
-                .get(AirportsConfig.getNearbyAirportsPath())
+                .get(Path.NEARBY_AIRPORTS)
                 .then()
                 .assertThat()
                 .statusCode(200)

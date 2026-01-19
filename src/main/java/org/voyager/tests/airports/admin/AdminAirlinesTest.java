@@ -8,7 +8,8 @@ import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeAll;
 import org.voyager.commons.constants.Headers;
-import org.voyager.tests.config.AirlinesConfig;
+import org.voyager.commons.constants.ParameterNames;
+import org.voyager.commons.constants.Path;
 import org.voyager.tests.config.FunctionalTestConfig;
 
 class AdminAirlinesTest {
@@ -37,7 +38,7 @@ class AdminAirlinesTest {
         RestAssured.given()
                 .spec(requestSpec)
                 .when()
-                .get(AirlinesConfig.getAdminAirlinesPath())
+                .get(Path.Admin.AIRLINES)
                 .then()
                 .assertThat()
                 .statusCode(403);
@@ -45,7 +46,7 @@ class AdminAirlinesTest {
         RestAssured.given()
                 .spec(adminRequestSpec)
                 .when()
-                .get(AirlinesConfig.getAdminAirlinesPath())
+                .get(Path.Admin.AIRLINES)
                 .then()
                 .assertThat()
                 .statusCode(405);
@@ -53,7 +54,7 @@ class AdminAirlinesTest {
         RestAssured.given()
                 .spec(requestSpec)
                 .when()
-                .post(AirlinesConfig.getAdminAirlinesPath())
+                .post(Path.Admin.AIRLINES)
                 .then()
                 .assertThat()
                 .statusCode(403);
@@ -62,7 +63,7 @@ class AdminAirlinesTest {
                 .spec(adminRequestSpec)
                 .contentType(ContentType.JSON)
                 .when()
-                .post(AirlinesConfig.getAdminAirlinesPath())
+                .post(Path.Admin.AIRLINES)
                 .then()
                 .assertThat()
                 .statusCode(400);
@@ -70,7 +71,7 @@ class AdminAirlinesTest {
         RestAssured.given()
                 .spec(requestSpec)
                 .when()
-                .delete(AirlinesConfig.getAdminAirlinesPath())
+                .delete(Path.Admin.AIRLINES)
                 .then()
                 .assertThat()
                 .statusCode(403);
@@ -78,7 +79,7 @@ class AdminAirlinesTest {
         RestAssured.given()
                 .spec(adminRequestSpec)
                 .when()
-                .delete(AirlinesConfig.getAdminAirlinesPath())
+                .delete(Path.Admin.AIRLINES)
                 .then()
                 .assertThat()
                 .statusCode(400);
@@ -90,7 +91,7 @@ class AdminAirlinesTest {
                 .spec(adminRequestSpec)
                 .contentType(ContentType.JSON)
                 .when()
-                .post(AirlinesConfig.getAdminAirlinesPath())
+                .post(Path.Admin.AIRLINES)
                 .then()
                 .assertThat()
                 .statusCode(400)
@@ -101,7 +102,7 @@ class AdminAirlinesTest {
                 .contentType(ContentType.JSON)
                 .body("{}")
                 .when()
-                .post(AirlinesConfig.getAdminAirlinesPath())
+                .post(Path.Admin.AIRLINES)
                 .then()
                 .assertThat()
                 .statusCode(400)
@@ -115,7 +116,7 @@ class AdminAirlinesTest {
                 .contentType(ContentType.JSON)
                 .body("{\"airline\":\"delta\",\"isActive\":true,\"iataList\":[]}")
                 .when()
-                .post(AirlinesConfig.getAdminAirlinesPath())
+                .post(Path.Admin.AIRLINES)
                 .then()
                 .assertThat()
                 .statusCode(400)
@@ -126,7 +127,7 @@ class AdminAirlinesTest {
                 .contentType(ContentType.JSON)
                 .body("{\"airline\":\"delta\",\"isActive\":true,\"iataList\":[\"SJC\",\"SFO\"]}")
                 .when()
-                .post(AirlinesConfig.getAdminAirlinesPath())
+                .post(Path.Admin.AIRLINES)
                 .then()
                 .assertThat()
                 .statusCode(200)
@@ -139,7 +140,7 @@ class AdminAirlinesTest {
                 .spec(adminRequestSpec)
                 .contentType(ContentType.JSON)
                 .when()
-                .delete(AirlinesConfig.getAdminAirlinesPath())
+                .delete(Path.Admin.AIRLINES)
                 .then()
                 .assertThat()
                 .statusCode(400)
@@ -149,31 +150,32 @@ class AdminAirlinesTest {
         RestAssured.given()
                 .spec(adminRequestSpec)
                 .contentType(ContentType.JSON)
-                .body("{}")
                 .when()
-                .delete(AirlinesConfig.getAdminAirlinesPath().concat("?airline="))
+                .queryParam(ParameterNames.AIRLINE_PARAM_NAME,"")
+                .delete(Path.Admin.AIRLINES)
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", Matchers.containsString("airline"));
+                .body("message", Matchers.containsString("Missing required request parameter 'airline'"));
+
+        RestAssured.given()
+                .spec(adminRequestSpec)
+                .contentType(ContentType.JSON)
+                .when()
+                .queryParam(ParameterNames.AIRLINE_PARAM_NAME,"fakeairline")
+                .delete(Path.Admin.AIRLINES)
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", Matchers.containsString("Invalid request parameter 'airline' with value 'fakeairline'"));
 
         RestAssured.given()
                 .spec(adminRequestSpec)
                 .contentType(ContentType.JSON)
                 .body("{}")
                 .when()
-                .delete(AirlinesConfig.getAdminAirlinesPath().concat("?airline=fakeairline"))
-                .then()
-                .assertThat()
-                .statusCode(400)
-                .body("message", Matchers.containsString("airline"));
-
-        RestAssured.given()
-                .spec(adminRequestSpec)
-                .contentType(ContentType.JSON)
-                .body("{}")
-                .when()
-                .delete(AirlinesConfig.getAdminAirlinesPath().concat("?airline=zipair"))
+                .queryParam(ParameterNames.AIRLINE_PARAM_NAME,"zipair")
+                .delete(Path.Admin.AIRLINES)
                 .then()
                 .assertThat()
                 .statusCode(200)
