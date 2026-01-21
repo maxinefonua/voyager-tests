@@ -38,7 +38,7 @@ public class NearbyAirportsTest {
 
         RestAssured.given()
                 .spec(requestSpec)
-                .queryParam(ParameterNames.IATA_PARAM_NAME,"SLC")
+                .queryParam(ParameterNames.IATA,"SLC")
                 .when()
                 .get(Path.NEARBY_AIRPORTS)
                 .then()
@@ -51,8 +51,8 @@ public class NearbyAirportsTest {
 
         RestAssured.given()
                 .spec(requestSpec)
-                .queryParam(ParameterNames.IATA_PARAM_NAME,"SLC")
-                .queryParam(ParameterNames.TYPE_PARAM_NAME,"military")
+                .queryParam(ParameterNames.IATA,"SLC")
+                .queryParam(ParameterNames.TYPE,"military")
                 .when()
                 .get(Path.NEARBY_AIRPORTS)
                 .then()
@@ -65,8 +65,8 @@ public class NearbyAirportsTest {
 
         RestAssured.given()
                 .spec(requestSpec)
-                .queryParam(ParameterNames.IATA_PARAM_NAME,"SLC")
-                .queryParam(ParameterNames.AIRLINE_PARAM_NAME,"delta")
+                .queryParam(ParameterNames.IATA,"SLC")
+                .queryParam(ParameterNames.AIRLINE,"delta")
                 .when()
                 .get(Path.NEARBY_AIRPORTS)
                 .then()
@@ -79,8 +79,8 @@ public class NearbyAirportsTest {
 
         RestAssured.given()
                 .spec(requestSpec)
-                .queryParam(ParameterNames.IATA_PARAM_NAME,"SLC")
-                .queryParam(ParameterNames.AIRLINE_PARAM_NAME,"delta,united")
+                .queryParam(ParameterNames.IATA,"SLC")
+                .queryParam(ParameterNames.AIRLINE,"delta,united")
                 .when()
                 .get(Path.NEARBY_AIRPORTS)
                 .then()
@@ -98,7 +98,7 @@ public class NearbyAirportsTest {
         RestAssured.given()
                 .spec(requestSpec)
                 .when()
-                .queryParam(ParameterNames.LATITUDE_PARAM_NAME,latitudeOfSLC)
+                .queryParam(ParameterNames.LATITUDE,latitudeOfSLC)
                 .get(Path.NEARBY_AIRPORTS)
                 .then()
                 .assertThat()
@@ -109,11 +109,11 @@ public class NearbyAirportsTest {
         Double longitudeOfSLC = -111.8912;
         RestAssured.given()
                 .spec(requestSpec)
-                .queryParams(ParameterNames.LATITUDE_PARAM_NAME,latitudeOfSLC,
-                        ParameterNames.LONGITUDE_PARAM_NAME,longitudeOfSLC,
-                        ParameterNames.LIMIT_PARAM_NAME,3,
-                        ParameterNames.TYPE_PARAM_NAME, AirportType.CIVIL.name(),
-                        ParameterNames.AIRLINE_PARAM_NAME, Airline.UNITED)
+                .queryParams(ParameterNames.LATITUDE,latitudeOfSLC,
+                        ParameterNames.LONGITUDE,longitudeOfSLC,
+                        ParameterNames.LIMIT,3,
+                        ParameterNames.TYPE, AirportType.CIVIL.name(),
+                        ParameterNames.AIRLINE, Airline.UNITED)
                 .when()
                 .get(Path.NEARBY_AIRPORTS)
                 .then()

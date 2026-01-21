@@ -4,7 +4,6 @@ import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
-import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeAll;
@@ -67,6 +66,49 @@ public class AdminAirportsTest {
                 .assertThat()
                 .statusCode(403)
                 .body("error", Matchers.equalTo("Forbidden"));
+
+        RestAssured.given()
+                .spec(adminRequestSpec)
+                .contentType(ContentType.JSON)
+                .body(airportForm)
+                .when()
+                .post(Path.Admin.AIRPORTS)
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", Matchers.containsString("Invalid request body"));
+
+        RestAssured.given()
+                .spec(adminRequestSpec)
+                .contentType(ContentType.JSON)
+                .body(airportForm)
+                .when()
+                .delete(Path.Admin.AIRPORTS)
+                .then()
+                .assertThat()
+                .statusCode(405)
+                .body("message", Matchers.equalTo("Request method 'DELETE' is not supported"));
+
+        RestAssured.given()
+                .spec(adminRequestSpec)
+                .contentType(ContentType.JSON)
+                .body(airportForm)
+                .when()
+                .pathParams(ParameterNames.IATA,"SJC")
+                .delete(Path.Admin.AIRPORTS.concat(Path.BY_IATA))
+                .then()
+                .assertThat()
+                .statusCode(403)
+                .body("message", Matchers.equalTo("Forbidden"));
+
+        Response response = RestAssured.given()
+                .spec(testRequestSpec)
+                .contentType(ContentType.JSON)
+                .body(airportForm)
+                .when()
+                .pathParams(ParameterNames.IATA,"ZZZ")
+                .delete(Path.Admin.AIRPORTS.concat(Path.BY_IATA));
+        assert response.statusCode() != 403;
     }
 
     @Test
@@ -76,7 +118,7 @@ public class AdminAirportsTest {
                 .spec(adminRequestSpec)
                 .contentType(ContentType.JSON)
                 .when()
-                .pathParams(ParameterNames.IATA_PARAM_NAME,iata)
+                .pathParams(ParameterNames.IATA,iata)
                 .get(Path.AIRPORT_BY_IATA);
         if (getResponse.statusCode() != 200) {
             AirportForm airportForm = AirportForm.builder()
@@ -106,7 +148,7 @@ public class AdminAirportsTest {
                     .spec(requestSpec)
                     .contentType(ContentType.JSON)
                     .when()
-                    .pathParams(ParameterNames.IATA_PARAM_NAME,iata)
+                    .pathParams(ParameterNames.IATA,iata)
                     .get(Path.AIRPORT_BY_IATA)
                     .then()
                     .assertThat()
@@ -118,8 +160,8 @@ public class AdminAirportsTest {
                 .spec(testRequestSpec)
                 .contentType(ContentType.JSON)
                 .when()
-                .pathParams(ParameterNames.IATA_PARAM_NAME,iata)
-                .delete("/admin".concat(Path.AIRPORT_BY_IATA))
+                .pathParams(ParameterNames.IATA,iata)
+                .delete(Path.Admin.AIRPORTS.concat(Path.BY_IATA))
                 .then()
                 .assertThat()
                 .statusCode(204);
@@ -133,8 +175,8 @@ public class AdminAirportsTest {
                 .contentType(ContentType.JSON)
                 .body(airportPatch)
                 .when()
-                .pathParams(ParameterNames.IATA_PARAM_NAME,"SJC")
-                .patch("/admin".concat(Path.AIRPORT_BY_IATA))
+                .pathParams(ParameterNames.IATA,"SJC")
+                .patch(Path.Admin.AIRPORTS.concat(Path.BY_IATA))
                 .then()
                 .assertThat()
                 .statusCode(403)
@@ -147,8 +189,8 @@ public class AdminAirportsTest {
                 .contentType(ContentType.JSON)
                 .body(airportPatch1)
                 .when()
-                .pathParams(ParameterNames.IATA_PARAM_NAME,"SJC")
-                .patch("/admin".concat(Path.AIRPORT_BY_IATA))
+                .pathParams(ParameterNames.IATA,"SJC")
+                .patch(Path.Admin.AIRPORTS.concat(Path.BY_IATA))
                 .then()
                 .assertThat()
                 .statusCode(200)
@@ -159,8 +201,8 @@ public class AdminAirportsTest {
                 .contentType(ContentType.JSON)
                 .body(airportPatch2)
                 .when()
-                .pathParams(ParameterNames.IATA_PARAM_NAME,"SJC")
-                .patch("/admin".concat(Path.AIRPORT_BY_IATA))
+                .pathParams(ParameterNames.IATA,"SJC")
+                .patch(Path.Admin.AIRPORTS.concat(Path.BY_IATA))
                 .then()
                 .assertThat()
                 .statusCode(200)

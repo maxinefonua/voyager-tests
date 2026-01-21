@@ -166,7 +166,7 @@ class AdminAirlinesTest {
                 .spec(adminRequestSpec)
                 .contentType(ContentType.JSON)
                 .when()
-                .queryParam(ParameterNames.AIRLINE_PARAM_NAME, "")
+                .queryParam(ParameterNames.AIRLINE, "")
                 .delete(Path.Admin.AIRLINES)
                 .then()
                 .assertThat()
@@ -177,7 +177,7 @@ class AdminAirlinesTest {
                 .spec(adminRequestSpec)
                 .contentType(ContentType.JSON)
                 .when()
-                .queryParam(ParameterNames.AIRLINE_PARAM_NAME, "fakeairline")
+                .queryParam(ParameterNames.AIRLINE, "fakeairline")
                 .delete(Path.Admin.AIRLINES)
                 .then()
                 .assertThat()
@@ -189,7 +189,7 @@ class AdminAirlinesTest {
                 .spec(adminRequestSpec)
                 .contentType(ContentType.JSON)
                 .when()
-                .queryParam(ParameterNames.AIRLINE_PARAM_NAME, airline)
+                .queryParam(ParameterNames.AIRLINE, airline)
                 .get(Path.IATA);
 
         List<String> airlineAirportList = response.body().as(new TypeRef<>() {});
@@ -197,7 +197,7 @@ class AdminAirlinesTest {
                 .spec(adminRequestSpec)
                 .contentType(ContentType.JSON)
                 .when()
-                .queryParam(ParameterNames.AIRLINE_PARAM_NAME, airline)
+                .queryParam(ParameterNames.AIRLINE, airline)
                 .delete(Path.Admin.AIRLINES)
                 .then()
                 .assertThat()

@@ -142,7 +142,7 @@ public class AirlinesTest {
     public void getAirlinesSingleAirport() {
         RestAssured.given()
                 .spec(requestSpec)
-                .queryParam(ParameterNames.IATA_PARAM_NAME, List.of("HEL"))
+                .queryParam(ParameterNames.IATA, List.of("HEL"))
                 .when()
                 .get(Path.AIRLINES)
                 .then()
