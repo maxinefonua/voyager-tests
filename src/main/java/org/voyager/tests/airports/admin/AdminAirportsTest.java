@@ -6,6 +6,7 @@ import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.voyager.commons.constants.Headers;
@@ -21,6 +22,7 @@ public class AdminAirportsTest {
     private static RequestSpecification requestSpec;
     private static RequestSpecification adminRequestSpec;
     private static RequestSpecification testRequestSpec;
+    private static final String TEST_IATA = "ZZZ";
 
     @BeforeAll
     public static void setup() {
@@ -43,6 +45,36 @@ public class AdminAirportsTest {
                 .addHeader("Accept", "application/json")
                 .addHeader(Headers.AUTH_TOKEN_HEADER_NAME, testToken)
                 .build();
+        if (testAirportExists()) {
+            deleteTestAirport();
+        }
+    }
+
+    public static boolean testAirportExists() {
+        Response getResponse = RestAssured.given()
+                .spec(adminRequestSpec)
+                .contentType(ContentType.JSON)
+                .when()
+                .pathParams(ParameterNames.IATA,TEST_IATA)
+                .get(Path.AIRPORT_BY_IATA);
+        return getResponse.statusCode() == 200;
+    }
+
+    public static void deleteTestAirport() {
+        RestAssured.given()
+                .spec(testRequestSpec)
+                .contentType(ContentType.JSON)
+                .when()
+                .pathParams(ParameterNames.IATA, TEST_IATA)
+                .delete(Path.Admin.AIRPORTS.concat(Path.BY_IATA))
+                .then()
+                .assertThat()
+                .statusCode(204);
+    }
+
+    @AfterAll
+    public static void cleanup() {
+        deleteTestAirport();
     }
 
     @Test
@@ -106,65 +138,46 @@ public class AdminAirportsTest {
                 .contentType(ContentType.JSON)
                 .body(airportForm)
                 .when()
-                .pathParams(ParameterNames.IATA,"ZZZ")
+                .pathParams(ParameterNames.IATA, TEST_IATA)
                 .delete(Path.Admin.AIRPORTS.concat(Path.BY_IATA));
         assert response.statusCode() != 403;
     }
 
     @Test
-    public void addAirportAndDeleteAirport() {
-        String iata = "ZZZ";
-        Response getResponse = RestAssured.given()
-                .spec(adminRequestSpec)
-                .contentType(ContentType.JSON)
-                .when()
-                .pathParams(ParameterNames.IATA,iata)
-                .get(Path.AIRPORT_BY_IATA);
-        if (getResponse.statusCode() != 200) {
-            AirportForm airportForm = AirportForm.builder()
-                    .iata(iata)
-                    .countryCode("PR")
-                    .zoneId(ZoneOffset.UTC.getId())
-                    .airportType(AirportType.CIVIL.name())
-                    .latitude("10")
-                    .longitude("1")
-                    .name("Test Name")
-                    .city("Test City")
-                    .subdivision("Test Subdivision")
-                    .build();
-
-            RestAssured.given()
-                    .spec(adminRequestSpec)
-                    .contentType(ContentType.JSON)
-                    .body(airportForm)
-                    .when()
-                    .post(Path.Admin.AIRPORTS)
-                    .then()
-                    .assertThat()
-                    .statusCode(200)
-                    .body("city", Matchers.equalTo("Test City"));
-
-            RestAssured.given()
-                    .spec(requestSpec)
-                    .contentType(ContentType.JSON)
-                    .when()
-                    .pathParams(ParameterNames.IATA,iata)
-                    .get(Path.AIRPORT_BY_IATA)
-                    .then()
-                    .assertThat()
-                    .statusCode(200)
-                    .body("name", Matchers.equalTo("Test Name"));
-        }
+    public void addAirport() {
+        AirportForm airportForm = AirportForm.builder()
+                .iata(TEST_IATA)
+                .countryCode("PR")
+                .zoneId(ZoneOffset.UTC.getId())
+                .airportType(AirportType.CIVIL.name())
+                .latitude("10")
+                .longitude("1")
+                .name("Test Name")
+                .city("Test City")
+                .subdivision("Test Subdivision")
+                .build();
 
         RestAssured.given()
-                .spec(testRequestSpec)
+                .spec(adminRequestSpec)
                 .contentType(ContentType.JSON)
+                .body(airportForm)
                 .when()
-                .pathParams(ParameterNames.IATA,iata)
-                .delete(Path.Admin.AIRPORTS.concat(Path.BY_IATA))
+                .post(Path.Admin.AIRPORTS)
                 .then()
                 .assertThat()
-                .statusCode(204);
+                .statusCode(200)
+                .body("city", Matchers.equalTo("Test City"));
+
+        RestAssured.given()
+                .spec(requestSpec)
+                .contentType(ContentType.JSON)
+                .when()
+                .pathParams(ParameterNames.IATA,TEST_IATA)
+                .get(Path.AIRPORT_BY_IATA)
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .body("name", Matchers.equalTo("Test Name"));
     }
 
     @Test

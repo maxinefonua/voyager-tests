@@ -80,7 +80,7 @@ public class NearbyAirportsTest {
         RestAssured.given()
                 .spec(requestSpec)
                 .queryParam(ParameterNames.IATA,"SLC")
-                .queryParam(ParameterNames.AIRLINE,"delta,united")
+                .queryParam(ParameterNames.AIRLINE,"delta,united,american")
                 .when()
                 .get(Path.NEARBY_AIRPORTS)
                 .then()
@@ -88,8 +88,8 @@ public class NearbyAirportsTest {
                 .statusCode(200)
                 .body("size()", Matchers.equalTo(5))
                 .body("[0].iata", Matchers.equalTo("SLC"))
-                .body("[1].iata", Matchers.equalTo("PIH"))
-                .body("[2].iata", Matchers.equalTo("RKS"));
+                .body("[1].iata", Matchers.equalTo("PVU"))
+                .body("[2].iata", Matchers.equalTo("PIH"));
     }
 
     @Test
@@ -113,7 +113,7 @@ public class NearbyAirportsTest {
                         ParameterNames.LONGITUDE,longitudeOfSLC,
                         ParameterNames.LIMIT,3,
                         ParameterNames.TYPE, AirportType.CIVIL.name(),
-                        ParameterNames.AIRLINE, Airline.UNITED)
+                        ParameterNames.AIRLINE,Airline.SOUTHWEST.name())
                 .when()
                 .get(Path.NEARBY_AIRPORTS)
                 .then()
@@ -121,7 +121,7 @@ public class NearbyAirportsTest {
                 .statusCode(200)
                 .body("size()", Matchers.equalTo(3))
                 .body("[0].iata", Matchers.equalTo("SLC"))
-                .body("[1].iata", Matchers.equalTo("RKS"))
-                .body("[2].iata", Matchers.equalTo("IDA"));
+                .body("[1].iata", Matchers.equalTo("MTJ"))
+                .body("[2].iata", Matchers.equalTo("BOI"));
     }
 }

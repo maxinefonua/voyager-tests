@@ -1,6 +1,5 @@
 package org.voyager.tests.airports.admin;
 
-import groovyjarjarasm.asm.TypeReference;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.common.mapper.TypeRef;
@@ -220,7 +219,7 @@ class AdminAirlinesTest {
                     .then()
                     .assertThat()
                     .statusCode(200)
-                    .body("", Matchers.equalTo(airlineAirportList.size()));
+                    .body("createdCount", Matchers.equalTo(airlineAirportList.size()));
         }
     }
 }

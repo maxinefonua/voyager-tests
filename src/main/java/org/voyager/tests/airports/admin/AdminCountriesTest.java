@@ -6,6 +6,7 @@ import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.voyager.commons.constants.Headers;
@@ -16,10 +17,11 @@ import org.voyager.commons.model.country.CountryForm;
 import org.voyager.tests.config.FunctionalTestConfig;
 import java.util.List;
 
-public class AdminCountryTest {
+public class AdminCountriesTest {
     private static RequestSpecification requestSpec;
     private static RequestSpecification adminRequestSpec;
     private static RequestSpecification testRequestSpec;
+    private static final String TEST_COUNTRY = "ZZ";
 
     @BeforeAll
     public static void setup() {
@@ -42,6 +44,39 @@ public class AdminCountryTest {
                 .addHeader("Accept", "application/json")
                 .addHeader(Headers.AUTH_TOKEN_HEADER_NAME, testToken)
                 .build();
+
+       if (testCountryExists()) {
+           deleteTestCountry();
+       }
+    }
+
+    public static boolean testCountryExists() {
+        Response getResponse = RestAssured.given()
+                .spec(adminRequestSpec)
+                .contentType(ContentType.JSON)
+                .when()
+                .pathParams(ParameterNames.COUNTRY_CODE,TEST_COUNTRY)
+                .get(Path.COUNTRIES.concat(Path.BY_COUNTRY_CODE));
+        return getResponse.statusCode() == 200;
+    }
+
+    public static void deleteTestCountry() {
+        RestAssured.given()
+                .spec(testRequestSpec)
+                .contentType(ContentType.JSON)
+                .when()
+                .pathParams(ParameterNames.COUNTRY_CODE,TEST_COUNTRY)
+                .delete(Path.Admin.COUNTRIES.concat(Path.BY_COUNTRY_CODE))
+                .then()
+                .assertThat()
+                .statusCode(204);
+    }
+
+    @AfterAll
+    public static void cleanup() {
+        if (testCountryExists()) {
+            deleteTestCountry();
+        }
     }
 
     @Test
@@ -128,17 +163,7 @@ public class AdminCountryTest {
                     .then()
                     .assertThat()
                     .statusCode(404);
-        }
-    }
-
-    @Test
-    public void addAndCleanupCountry() {
-        Response response = RestAssured.given()
-                        .spec(requestSpec)
-                        .when()
-                        .pathParams(ParameterNames.COUNTRY_CODE,"zz")
-                        .get(Path.COUNTRIES.concat(Path.BY_COUNTRY_CODE));
-        if (response.statusCode() == 200) {
+        } else {
             RestAssured.given()
                     .spec(testRequestSpec)
                     .when()
@@ -148,7 +173,10 @@ public class AdminCountryTest {
                     .assertThat()
                     .statusCode(204);
         }
+    }
 
+    @Test
+    public void addCountry() {
         CountryForm countryForm = CountryForm.builder()
                 .code("ZZ")
                 .west(-10.0)
@@ -176,7 +204,6 @@ public class AdminCountryTest {
                 .body("message", Matchers.containsString("Invalid request body"));
 
         countryForm.setContinent(Continent.OC.name());
-
         RestAssured.given()
                 .spec(adminRequestSpec)
                 .contentType(ContentType.JSON)
@@ -187,14 +214,5 @@ public class AdminCountryTest {
                 .assertThat()
                 .statusCode(200)
                 .body("name", Matchers.equalTo(countryForm.getName()));
-
-        RestAssured.given()
-                .spec(testRequestSpec)
-                .when()
-                .pathParams(ParameterNames.COUNTRY_CODE,"ZZ")
-                .delete(Path.Admin.COUNTRIES.concat(Path.BY_COUNTRY_CODE))
-                .then()
-                .assertThat()
-                .statusCode(204);
     }
 }

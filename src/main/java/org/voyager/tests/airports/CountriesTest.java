@@ -11,7 +11,7 @@ import org.voyager.commons.constants.ParameterNames;
 import org.voyager.commons.constants.Path;
 import org.voyager.tests.config.FunctionalTestConfig;
 
-public class CountryTest {
+public class CountriesTest {
     private static RequestSpecification requestSpec;
     @BeforeAll
     public static void setup() {
@@ -83,7 +83,7 @@ public class CountryTest {
                 .then()
                 .assertThat()
                 .statusCode(404)
-                .body("message", Matchers.containsString("Invalid path variable 'countryCode' with value 'zz'"));
+                .body("message", Matchers.containsString("Resource not found for path variable 'countryCode' with value 'zz'"));
 
         RestAssured.given()
                 .spec(requestSpec)
