@@ -2,9 +2,7 @@ package org.voyager.tests.airports.admin;
 
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
-import io.restassured.common.mapper.TypeRef;
 import io.restassured.http.ContentType;
-import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
@@ -88,7 +86,106 @@ class AdminAirlinesTest {
                 .delete(Path.Admin.AIRLINES)
                 .then()
                 .assertThat()
-                .statusCode(400);
+                .statusCode(405);
+    }
+
+    @Test
+    public void deactivateAirline() {
+        Airline airlineToDeactivate = Airline.VOLARIS;
+
+        // get current airline airports
+        List<String> airportCodes = getCurrentAirlineAirports(airlineToDeactivate);
+
+        // test bad requests
+        RestAssured.given()
+                .spec(adminRequestSpec)
+                .contentType(ContentType.JSON)
+                .when()
+                .post(Path.Admin.AIRLINES.concat(Path.Admin.DEACTIVATE))
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", Matchers.containsString("Missing required request parameter 'airline'"));
+
+        // deactivate airline
+        RestAssured.given()
+                .spec(adminRequestSpec)
+                .contentType(ContentType.JSON)
+                .queryParam(ParameterNames.AIRLINE,airlineToDeactivate.name())
+                .when()
+                .post(Path.Admin.AIRLINES.concat(Path.Admin.DEACTIVATE))
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .body("", Matchers.equalTo(airportCodes.size()));
+
+        // confirm airports do not return deactivated airline
+        firstAndLastAirportContainsAirline(false,airlineToDeactivate,airportCodes);
+
+        // reactivate airline airports
+        AirlineBatchUpsert airlineBatchUpsert = AirlineBatchUpsert.builder()
+                .airline(airlineToDeactivate.name())
+                .isActive(true)
+                .iataList(airportCodes)
+                .build();
+
+        RestAssured.given()
+                .spec(adminRequestSpec)
+                .contentType(ContentType.JSON)
+                .body(airlineBatchUpsert)
+                .when()
+                .post(Path.Admin.AIRLINES)
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .body("updatedCount", Matchers.equalTo(airportCodes.size()));
+
+        // confirm airports return airline
+        firstAndLastAirportContainsAirline(true,airlineToDeactivate,airportCodes);
+    }
+
+    private void firstAndLastAirportContainsAirline(boolean contains, Airline airlineToDeactivate, List<String> airportCodes) {
+        RestAssured.given()
+                .spec(adminRequestSpec)
+                .contentType(ContentType.JSON)
+                .param(ParameterNames.IATA,airportCodes.get(0))
+                .when()
+                .get(Path.AIRLINES)
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .body("", contains ?
+                        Matchers.hasItem(airlineToDeactivate.name()) :
+                        Matchers.not(Matchers.hasItem(airlineToDeactivate.name())));
+
+        int last = airportCodes.size()-1;
+        RestAssured.given()
+                .spec(adminRequestSpec)
+                .contentType(ContentType.JSON)
+                .param(ParameterNames.IATA,airportCodes.get(last))
+                .when()
+                .get(Path.AIRLINES)
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .body("", contains ?
+                        Matchers.hasItem(airlineToDeactivate.name()) :
+                        Matchers.not(Matchers.hasItem(airlineToDeactivate.name())));
+
+    }
+
+    private List<String> getCurrentAirlineAirports(Airline airlineToDeactivate) {
+        return RestAssured.given()
+                .spec(adminRequestSpec)
+                .contentType(ContentType.JSON)
+                .param(ParameterNames.AIRLINE,airlineToDeactivate.name())
+                .get(Path.IATA)
+                .then()
+                .statusCode(200)
+                .body("",Matchers.not(Matchers.empty()))
+                .extract()
+                .jsonPath()
+                .getList("", String.class);
     }
 
     @Test
@@ -146,80 +243,5 @@ class AdminAirlinesTest {
                 .assertThat()
                 .statusCode(200)
                 .body("skippedCount", Matchers.equalTo(2));
-    }
-
-    @Test
-    public void batchDeleteAirline() {
-        RestAssured.given()
-                .spec(adminRequestSpec)
-                .contentType(ContentType.JSON)
-                .when()
-                .delete(Path.Admin.AIRLINES)
-                .then()
-                .assertThat()
-                .statusCode(400)
-                .body("message", Matchers.containsString("Required request parameter"))
-                .body("message", Matchers.containsString("airline"));
-
-        RestAssured.given()
-                .spec(adminRequestSpec)
-                .contentType(ContentType.JSON)
-                .when()
-                .queryParam(ParameterNames.AIRLINE, "")
-                .delete(Path.Admin.AIRLINES)
-                .then()
-                .assertThat()
-                .statusCode(400)
-                .body("message", Matchers.containsString("Missing required request parameter 'airline'"));
-
-        RestAssured.given()
-                .spec(adminRequestSpec)
-                .contentType(ContentType.JSON)
-                .when()
-                .queryParam(ParameterNames.AIRLINE, "fakeairline")
-                .delete(Path.Admin.AIRLINES)
-                .then()
-                .assertThat()
-                .statusCode(400)
-                .body("message", Matchers.containsString("Invalid request parameter 'airline' with value 'fakeairline'"));
-
-        Airline airline = Airline.ZIPAIR;
-        Response response = RestAssured.given()
-                .spec(adminRequestSpec)
-                .contentType(ContentType.JSON)
-                .when()
-                .queryParam(ParameterNames.AIRLINE, airline)
-                .get(Path.IATA);
-
-        List<String> airlineAirportList = response.body().as(new TypeRef<>() {});
-        RestAssured.given()
-                .spec(adminRequestSpec)
-                .contentType(ContentType.JSON)
-                .when()
-                .queryParam(ParameterNames.AIRLINE, airline)
-                .delete(Path.Admin.AIRLINES)
-                .then()
-                .assertThat()
-                .statusCode(200)
-                .body("", Matchers.equalTo(airlineAirportList.size()));
-
-        if (!airlineAirportList.isEmpty()) {
-            AirlineBatchUpsert airlineBatchUpsert = AirlineBatchUpsert.builder()
-                    .iataList(airlineAirportList)
-                    .isActive(true)
-                    .airline(airline.name())
-                    .build();
-
-            RestAssured.given()
-                    .spec(adminRequestSpec)
-                    .contentType(ContentType.JSON)
-                    .body(airlineBatchUpsert)
-                    .when()
-                    .post(Path.Admin.AIRLINES)
-                    .then()
-                    .assertThat()
-                    .statusCode(200)
-                    .body("createdCount", Matchers.equalTo(airlineAirportList.size()));
-        }
     }
 }

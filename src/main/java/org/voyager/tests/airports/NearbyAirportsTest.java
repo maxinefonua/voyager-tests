@@ -121,7 +121,7 @@ public class NearbyAirportsTest {
                 .statusCode(200)
                 .body("size()", Matchers.equalTo(3))
                 .body("[0].iata", Matchers.equalTo("SLC"))
-                .body("[1].iata", Matchers.equalTo("MTJ"))
-                .body("[2].iata", Matchers.equalTo("BOI"));
+                .body("[1].iata", Matchers.equalTo("HDN"))
+                .body("[2].iata", Matchers.equalTo("MTJ"));
     }
 }
