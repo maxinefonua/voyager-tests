@@ -157,7 +157,7 @@ public class FlightsTest {
         RestAssured.given()
                 .spec(requestSpec)
                 .when()
-                .queryParam(ParameterNames.FLIGHT_NUMBER, "UA917")
+                .queryParam(ParameterNames.FLIGHT_NUMBER, "DL904")
                 .get(Path.FLIGHTS)
                 .then()
                 .assertThat()
@@ -165,18 +165,18 @@ public class FlightsTest {
                 .body("page", Matchers.equalTo(0))
                 .body("first", Matchers.equalTo(true))
                 .body("size", Matchers.equalTo(100))
-                .body("totalElements",Matchers.equalTo(1))
+                .body("totalElements",Matchers.equalTo(2))
                 .body("content", Matchers.everyItem(Matchers.allOf(
                         Matchers.not(Matchers.empty()),
-                        Matchers.hasEntry("airline", Airline.UNITED.name()),
-                        Matchers.hasEntry("flightNumber", "UA917")
+                        Matchers.hasEntry("airline", Airline.DELTA.name()),
+                        Matchers.hasEntry("flightNumber", "DL904")
                 )));
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXX");
         RestAssured.given()
                 .spec(requestSpec)
                 .when()
-                .queryParam(ParameterNames.FLIGHT_NUMBER, "UA917")
+                .queryParam(ParameterNames.FLIGHT_NUMBER, "DL904")
                 .queryParam(ParameterNames.START, ZonedDateTime.now().minusDays(1).format(formatter))
                 .get(Path.FLIGHTS)
                 .then()
@@ -185,17 +185,17 @@ public class FlightsTest {
                 .body("page", Matchers.equalTo(0))
                 .body("first", Matchers.equalTo(true))
                 .body("size", Matchers.equalTo(100))
-                .body("totalElements",Matchers.equalTo(1))
+                .body("totalElements",Matchers.equalTo(2))
                 .body("content", Matchers.everyItem(Matchers.allOf(
                         Matchers.not(Matchers.empty()),
-                        Matchers.hasEntry("airline", Airline.UNITED.name()),
-                        Matchers.hasEntry("flightNumber", "UA917")
+                        Matchers.hasEntry("airline", Airline.DELTA.name()),
+                        Matchers.hasEntry("flightNumber", "DL904")
                 )));
 
         RestAssured.given()
                 .spec(requestSpec)
                 .when()
-                .queryParam(ParameterNames.FLIGHT_NUMBER, "UA917")
+                .queryParam(ParameterNames.FLIGHT_NUMBER, "DL904")
                 .queryParam(ParameterNames.START, ZonedDateTime.now().minusDays(1).format(formatter))
                 .queryParam(ParameterNames.END, ZonedDateTime.now().plusDays(1).format(formatter))
                 .get(Path.FLIGHTS)
@@ -205,11 +205,11 @@ public class FlightsTest {
                 .body("page", Matchers.equalTo(0))
                 .body("first", Matchers.equalTo(true))
                 .body("size", Matchers.equalTo(100))
-                .body("totalElements",Matchers.greaterThan(1))
+                .body("totalElements",Matchers.greaterThan(2))
                 .body("content", Matchers.everyItem(Matchers.allOf(
                         Matchers.not(Matchers.empty()),
-                        Matchers.hasEntry("airline", Airline.UNITED.name()),
-                        Matchers.hasEntry("flightNumber", "UA917")
+                        Matchers.hasEntry("airline", Airline.DELTA.name()),
+                        Matchers.hasEntry("flightNumber", "DL904")
                 )));
     }
 
