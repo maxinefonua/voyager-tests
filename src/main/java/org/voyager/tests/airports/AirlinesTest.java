@@ -65,7 +65,6 @@ public class AirlinesTest {
 
     @Test
     public void getAirlinesPathParams() {
-        String origin = "origin=ITM";
         RestAssured.given()
                 .spec(requestSpec)
                 .when()
@@ -87,7 +86,6 @@ public class AirlinesTest {
                 .statusCode(200)
                 .body("size()", Matchers.is(0));
 
-        String destination2 = "destination=HNL";
         RestAssured.given()
                 .spec(requestSpec)
                 .when()
