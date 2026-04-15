@@ -12,6 +12,7 @@ import org.voyager.commons.constants.Headers;
 import org.voyager.commons.constants.ParameterNames;
 import org.voyager.commons.constants.Path;
 import org.voyager.commons.model.route.Route;
+import org.voyager.commons.model.route.RouteForm;
 import org.voyager.tests.config.FunctionalTestConfig;
 import java.util.List;
 
@@ -37,7 +38,34 @@ public class AdminRouteSyncTest {
     }
 
     @Test
-    public void authenticateGet() {
+    public void authenticateAddRoute() {
+        RestAssured.given()
+                .spec(requestSpec)
+                .when()
+                .post(Path.Admin.ROUTES)
+                .then()
+                .assertThat()
+                .statusCode(403);
+
+        RouteForm routeForm = RouteForm.builder()
+                .origin("AAA")
+                .destination("ZZZ")
+                .build();
+
+        RestAssured.given()
+                .spec(adminRequestSpec)
+                .contentType(ContentType.JSON)
+                .body(routeForm)
+                .when()
+                .post(Path.Admin.ROUTES)
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", Matchers.containsString("Invalid request body"));
+    }
+
+    @Test
+    public void authenticateGetRouteSyncById() {
         RestAssured.given()
                 .spec(requestSpec)
                 .when()

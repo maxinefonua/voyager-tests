@@ -176,7 +176,7 @@ public class AdminCountriesTest {
     }
 
     @Test
-    public void addCountry() {
+    public void addAndDeleteCountry() {
         CountryForm countryForm = CountryForm.builder()
                 .code("ZZ")
                 .west(-10.0)

@@ -144,7 +144,7 @@ public class AdminAirportsTest {
     }
 
     @Test
-    public void addAirport() {
+    public void addAndDeleteAirport() {
         AirportForm airportForm = AirportForm.builder()
                 .iata(TEST_IATA)
                 .countryCode("PR")
