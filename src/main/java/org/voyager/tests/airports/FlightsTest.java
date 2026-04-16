@@ -11,7 +11,6 @@ import org.voyager.commons.constants.ParameterNames;
 import org.voyager.commons.constants.Path;
 import org.voyager.commons.model.airline.Airline;
 import org.voyager.tests.config.FunctionalTestConfig;
-
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
