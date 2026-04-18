@@ -13,9 +13,6 @@ import org.voyager.commons.model.flight.FlightBatchDelete;
 import org.voyager.commons.model.flight.FlightBatchUpsert;
 import org.voyager.commons.model.flight.FlightUpsert;
 import org.voyager.tests.config.FunctionalTestConfig;
-
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class AdminFlightsTest {

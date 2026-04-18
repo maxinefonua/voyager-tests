@@ -89,9 +89,4 @@ public class RoutesTest {
                 .body("origin",Matchers.hasItem("SFO"))
                 .body("origin",Matchers.hasItem("ABQ"));
     }
-
-    //Route getRoute(
-    //            @RequestParam(name = ParameterNames.ORIGIN) String origin,
-    //            @RequestParam(name = ParameterNames.DESTINATION) String destination) {
-    //
 }
