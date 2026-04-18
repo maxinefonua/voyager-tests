@@ -14,7 +14,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.test.skip>true</maven.test.skip>
         <lombok.version>1.18.36</lombok.version>
-        <voyager-models.version>0.1.11</voyager-models.version>
+        <voyager-models.version>0.1.15</voyager-models.version>
     </properties>
 
     <repositories>
