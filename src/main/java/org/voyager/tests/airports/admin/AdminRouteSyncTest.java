@@ -13,6 +13,7 @@ import org.voyager.commons.constants.ParameterNames;
 import org.voyager.commons.constants.Path;
 import org.voyager.commons.model.route.Route;
 import org.voyager.commons.model.route.RouteForm;
+import org.voyager.commons.model.route.Status;
 import org.voyager.tests.config.FunctionalTestConfig;
 import java.util.List;
 
@@ -65,6 +66,50 @@ public class AdminRouteSyncTest {
     }
 
     @Test
+    public void authenticateGetRouteSync() {
+        RestAssured.given()
+                .spec(requestSpec)
+                .when()
+                .get(Path.Admin.ROUTES.concat(Path.Admin.SYNC))
+                .then()
+                .assertThat()
+                .statusCode(403);
+
+        RestAssured.given()
+                .spec(adminRequestSpec)
+                .contentType(ContentType.JSON)
+                .when()
+                .get(Path.Admin.ROUTES.concat(Path.Admin.SYNC))
+                .then()
+                .assertThat()
+                .statusCode(400);
+    }
+
+    @Test
+    public void getRouteSync() {
+        RestAssured.given()
+                .spec(adminRequestSpec)
+                .contentType(ContentType.JSON)
+                .when()
+                .queryParam(ParameterNames.STATUS, Status.PROCESSING.name())
+                .get(Path.Admin.ROUTES.concat(Path.Admin.SYNC))
+                .then()
+                .assertThat()
+                .statusCode(200);
+
+        RestAssured.given()
+                .spec(adminRequestSpec)
+                .contentType(ContentType.JSON)
+                .when()
+                .queryParam(ParameterNames.STATUS, Status.PENDING.name(), Status.COMPLETED.name())
+                .get(Path.Admin.ROUTES.concat(Path.Admin.SYNC))
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .body("",Matchers.not(Matchers.empty()));
+    }
+
+    @Test
     public void authenticateGetRouteSyncById() {
         RestAssured.given()
                 .spec(requestSpec)
@@ -109,4 +154,5 @@ public class AdminRouteSyncTest {
                 .body("", Matchers.not(Matchers.empty()))
                 .body("id",Matchers.equalTo(route.getId()));
     }
+
 }
