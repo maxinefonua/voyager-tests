@@ -47,7 +47,41 @@ public class FunctionalTestRunner {
         LOGGER.info("=" .repeat(60));
         LOGGER.info("📋 TEST EXECUTION COMPLETED");
 
-        printVerboseSummary(summaryListener.getSummary(), endTime - startTime);
+        TestExecutionSummary summary = summaryListener.getSummary();
+        printVerboseSummary(summary, endTime - startTime);
+
+        if (summary.getTestsStartedCount() == 0) {
+            LOGGER.error("❌❌❌ CRITICAL ERROR: No tests were executed! ❌❌❌");
+            LOGGER.error("Tests found: {} but none started.", summary.getTestsFoundCount());
+            LOGGER.error("Possible causes:");
+            LOGGER.error("  1. Test discovery configuration issue");
+            LOGGER.error("  2. No matching test methods found");
+            LOGGER.error("  3. All tests are disabled or skipped");
+            LOGGER.error("  4. JUnit engine initialization failure");
+            System.exit(2); // Exit with specific code for "no tests executed"
+        }
+
+        // Check if any tests were found
+        if (summary.getTestsFoundCount() == 0) {
+            LOGGER.error("❌ CRITICAL ERROR: No tests were discovered!");
+            LOGGER.error("No test classes found in package: {}", FunctionalTestRunner.class.getPackage().getName());
+            System.exit(3); // Exit with code for "no tests discovered"
+        }
+
+        // Exit with appropriate code based on test results
+        int exitCode = 0;
+        if (summary.getTestsFailedCount() > 0) {
+            LOGGER.error("❌ Tests FAILED. Exiting with error code.");
+            exitCode = 1;
+        } else if (summary.getTestsSucceededCount() == 0 && summary.getTestsFoundCount() > 0) {
+            LOGGER.error("❌ No tests passed. All tests either failed, aborted, or were skipped.");
+            exitCode = 1;
+        } else {
+            LOGGER.info("✅ All executed tests PASSED.");
+        }
+
+        // Exit with the determined code
+        System.exit(exitCode);
     }
 
     private static boolean runHealthTest() {
